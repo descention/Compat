@@ -1,0 +1,8 @@
+## Interface: 50400
+## Title: |cff00fe00Compat|r
+## Notes: Compat layer for 5.4.8 to 7.0.3
+## Author: Descention
+## Version: v1
+
+Compat.lua
+SoundKitConstants.lua
