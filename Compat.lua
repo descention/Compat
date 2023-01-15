@@ -60,6 +60,10 @@ if not IsLegion then
 	LE_INVENTORY_TYPE_CLOAK_TYPE = INVTYPE_CLOAK
 	LE_INVENTORY_TYPE_HOLDABLE_TYPE = INVTYPE_HOLDABLE
 
+    LE_ITEM_QUALITY_UNCOMMON = 2
+    LE_ITEM_QUALITY_RARE = 3
+
+
     function GetItemClassInfo(classID)
         local itemClasses = { GetAuctionItemClasses() };
         if (classID == LE_ITEM_CLASS_ITEM_ENHANCEMENT) then
@@ -128,5 +132,13 @@ if not IsLegion then
 
     local mt = getmetatable(CreateFrame('Frame'):CreateTexture())
     mt.__index.SetColorTexture = mt.__index.SetTexture
+    
+    function GetRecipeReagentItemLink()
+        --GetTradeSkillReagentItemLink
+    end
 
+    C_TradeSkillUI = {
+        GetRecipeNumItemsProduced = GetTradeSkillNumMade
+       -- GetRecipeReagentItemLink = 
+    }
 end
