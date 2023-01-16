@@ -63,6 +63,27 @@ if not IsLegion then
     LE_ITEM_QUALITY_UNCOMMON = 2
     LE_ITEM_QUALITY_RARE = 3
 
+    function GetItemClassIdByName(className)
+        local itemClasses = { GetAuctionItemClasses() }
+        if (className == "Item Enhancement") then
+            return LE_ITEM_CLASS_ITEM_ENHANCEMENT
+        end
+
+        local index={}
+        for k,v in pairs(itemClasses) do
+            index[v]=k
+        end
+        return index[className]
+    end
+
+    function GetItemSubClassIdByName(classId, subClassName)
+        local subItemClasses = { GetAuctionItemSubClasses(classId) }
+        local index={}
+        for k,v in pairs(subItemClasses) do
+            index[v]=k
+        end
+        return index[subClassName]
+    end
 
     function GetItemClassInfo(classID)
         local itemClasses = { GetAuctionItemClasses() };
@@ -81,7 +102,7 @@ if not IsLegion then
             index[v]=k
         end
 
-        return index[subClassID], (classID == 4 and index[subClassID] <= 4);
+        return {index[subClassID], (classID == 4 and index[subClassID] <= 4)};
     end
 
     function GetItemInventorySlotInfo(index)
@@ -121,13 +142,18 @@ if not IsLegion then
     end
 
     function GetItemInfoInstant(itemID)
-        local data = GetItemInfo(itemID)
-        
-        if not data then
-            data = GetItemInfo(itemID)
-        end
-
-        return {itemID, select(6, data), select(7, data), select(9, data)}
+        local data = {GetItemInfo(itemID)}
+        local classId = GetItemClassIdByName(data[6])
+        local subClassId = GetItemSubClassIdByName(classId, data[7])
+        -- /dump GetItemInfoInstant(6948)
+        return {itemID,         -- itemid
+            data[6],    -- item type
+            data[7],    -- item subtype
+            data[9],    -- item equip location
+            GetItemIcon(itemID), -- icon
+            classId,    -- class id
+            subClassId  -- subclass id
+        }
     end
 
     local mt = getmetatable(CreateFrame('Frame'):CreateTexture())
@@ -141,4 +167,8 @@ if not IsLegion then
         GetRecipeNumItemsProduced = GetTradeSkillNumMade
        -- GetRecipeReagentItemLink = 
     }
+
+    function C_WowTokenPublic.GetCurrentMarketPrice()
+        return nil
+    end
 end
