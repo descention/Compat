@@ -1,6 +1,8 @@
 local IsLegion = select(4, GetBuildInfo()) >= 70000
 
 if not IsLegion then
+    local GetItemInfo = _G.GetItemInfo
+
     LE_ITEM_CLASS_WEAPON = 1;
     LE_ITEM_CLASS_ARMOR = 2;
     LE_ITEM_CLASS_CONTAINER = 3;
@@ -99,9 +101,7 @@ if not IsLegion then
     end
 
     function GetItemSubClassInfo(classID, subClassID)
-        print ("GetItemSubClassInfo("..classID .. "," .. subClassID .. ")")
         local subItemClasses = { GetAuctionItemSubClasses(classID) }
-        print(subItemClasses);
         local index={}
         for k,v in pairs(subItemClasses) do
             index[v]=k
@@ -146,8 +146,29 @@ if not IsLegion then
         return name;
     end
 
-    function GetItemInfoInstant(itemID)
+    _G.GetItemInfo = function(...)
+        local data = GetItemInfo(...)
+        if select("#", data) == 0 then
+            return data
+        end
+        local classID = GetItemClassIdByName(data[6])
+        table.insert(data, classID)
+        local subClassID = GetItemSubClassIdByName(data[7])
+        table.insert(data, subClassID)
+        return data
+    end
+
+    _G.GetItemInfoInstant = function (itemID)
         local data = {GetItemInfo(itemID)}
+        if not data[6] then
+            print ("retry", itemID)
+            data = {GetItemInfo(itemID)}
+        end
+
+        if not data[6] then
+            return {}
+        end
+
         local classId = GetItemClassIdByName(data[6])
         local subClassId = GetItemSubClassIdByName(classId, data[7])
         -- /dump GetItemInfoInstant(6948)
@@ -161,8 +182,12 @@ if not IsLegion then
         }
     end
 
-    local mt = getmetatable(CreateFrame('Frame'):CreateTexture())
-    mt.__index.SetColorTexture = mt.__index.SetTexture
+    local texture_mt = getmetatable(CreateFrame('Frame'):CreateTexture())
+    texture_mt.__index.SetColorTexture = texture_mt.__index.SetTexture
+
+    local animation_mt = getmetatable(CreateFrame('Frame'):CreateAnimationGroup("DumpGroup"):CreateAnimation("Alpha"))
+    animation_mt.__index.SetFromAlpha = function(alpha) return end
+    animation_mt.__index.SetToAlpha = function(alpha) return end
     
     function GetRecipeReagentItemLink()
         --GetTradeSkillReagentItemLink
@@ -173,7 +198,8 @@ if not IsLegion then
        -- GetRecipeReagentItemLink = 
     }
 
-    function C_WowTokenPublic.GetCurrentMarketPrice()
-        return nil
-    end
+    C_WowTokenPublic = {
+        GetCurrentMarketPrice = function() return nil end,
+        UpdateMarketPrice = function() return end
+    }
 end
