@@ -1,5 +1,17 @@
 local IsLegion = select(4, GetBuildInfo()) >= 70000
 
+Compat = {
+    -- https://stackoverflow.com/a/15278426
+    TableConcat = function (t1,t2)
+        for i=1,#t2 do
+            t1[#t1+1] = t2[i]
+        end
+        return t1
+    end,
+    GetItemInfo = _G.GetItemInfo,
+    QueryAuctionItems = _G.QueryAuctionItems
+}
+
 if not IsLegion then
     local GetItemInfo = _G.GetItemInfo
 
@@ -83,13 +95,14 @@ if not IsLegion then
         return index[className]
     end
 
-    function GetItemSubClassIdByName(classId, subClassName)
-        local subItemClasses = { GetAuctionItemSubClasses(classId) }
+    function GetItemSubClassIdByName(classID, subClassID)
+        --print("GetItemSubClassIdByName", classID, subClassID)
+        local subItemClasses = { GetAuctionItemSubClasses(classID) }
         local index={}
         for k,v in pairs(subItemClasses) do
             index[v]=k
         end
-        return index[subClassName]
+        return index[subClassID]
     end
 
     function GetItemClassInfo(classID)
@@ -101,6 +114,7 @@ if not IsLegion then
     end
 
     function GetItemSubClassInfo(classID, subClassID)
+        --print("GetItemSubClassInfo", classID, subClassID)
         local subItemClasses = { GetAuctionItemSubClasses(classID) }
         local index={}
         for k,v in pairs(subItemClasses) do
@@ -146,40 +160,80 @@ if not IsLegion then
         return name;
     end
 
-    _G.GetItemInfo = function(...)
-        local data = GetItemInfo(...)
-        if select("#", data) == 0 then
-            return data
-        end
-        local classID = GetItemClassIdByName(data[6])
-        table.insert(data, classID)
-        local subClassID = GetItemSubClassIdByName(data[7])
-        table.insert(data, subClassID)
-        return data
-    end
-
-    _G.GetItemInfoInstant = function (itemID)
-        local data = {GetItemInfo(itemID)}
-        if not data[6] then
-            print ("retry", itemID)
-            data = {GetItemInfo(itemID)}
-        end
-
-        if not data[6] then
+    -- /dump GetItemInfo(6948)
+    _G.GetItemInfo = function(itemID)
+        local itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType,
+        itemStackCount, itemEquipLoc, itemTexture, sellPrice = Compat.GetItemInfo(itemID)
+        
+        if not itemType then
             return {}
         end
 
-        local classId = GetItemClassIdByName(data[6])
-        local subClassId = GetItemSubClassIdByName(classId, data[7])
-        -- /dump GetItemInfoInstant(6948)
-        return {itemID,         -- itemid
-            data[6],    -- item type
-            data[7],    -- item subtype
-            data[9],    -- item equip location
-            GetItemIcon(itemID), -- icon
-            classId,    -- class id
-            subClassId  -- subclass id
-        }
+        local classID = GetItemClassIdByName(itemType)
+        local subClassID = GetItemSubClassIdByName(classID, itemSubType)
+        --print("GetItemInfo", itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subClassID)
+        return itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subClassID
+    end
+
+    _G.GetItemInfoInstant = function (itemID)
+        if false then
+            local data = {GetItemInfo(itemID)}
+            if not data[6] then
+                print ("retry", itemID)
+                data = {GetItemInfo(itemID)}
+            end
+
+            if not data[6] then
+                print("failed to get instant data", itemID)
+                return {}
+            end
+
+            local classId = GetItemClassIdByName(data[6])
+            local subClassId = GetItemSubClassIdByName(classId, data[7])
+            -- /dump GetItemInfoInstant(6948)
+            return itemID,         -- itemid
+                data[6],    -- item type
+                data[7],    -- item subtype
+                data[9],    -- item equip location
+                GetItemIcon(itemID), -- icon
+                classId,    -- class id
+                subClassId  -- subclass id
+        else
+            return {}
+        end
+    end
+
+    _G.QueryAuctionItems = function(...)
+        local t = {...}
+
+        if select("#",...) == 1 then
+            Compat.QueryAuctionItems(...)
+        elseif select("#", ...) == 9 then
+            if type(t[7]) == "boolean" and t[7] == true then
+                -- "", 0, 0, 0, false, 0, true, false, nil
+                print("QueryAuctionItems", "GetAll")
+                Compat.QueryAuctionItems(true)
+            elseif ((t[9] ~= nil and type(t[9]) == "table") or (t[4] ~= nil and type(t[4]) == "number")) then
+                print("QueryAuctionItems", "7.x", ...)
+                local text, minLevel, maxLevel, page, usable, rarity, getAll, exactMatch, filterData = ...
+                
+                local invType = nil
+                local class = nil
+                local subclass = nil
+                if filterData then
+                    invType   = filterData["inventoryType"]
+                    class     = filterData["classID"]
+                    subclass  = filterData["subClassID"]
+                end
+                --print('"'..text..'"', minLevel, maxLevel, invType, class, subclass, page, usable, rarity)
+                Compat.QueryAuctionItems(text, minLevel, maxLevel, invType, class, subclass, page, usable, rarity)
+            else
+                print("QueryAuctionItems", "5.x", ...)
+                -- local text, minLevel, maxLevel, invType, class, subclass, page, usable, rarity = ...
+                Compat.QueryAuctionItems(...)
+            end
+        end
+        print(t[9] ~= nil , type(t[9]) == "table", t[4] ~= nil, type(t[4]) == "number")
     end
 
     local texture_mt = getmetatable(CreateFrame('Frame'):CreateTexture())
