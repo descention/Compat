@@ -179,12 +179,12 @@ if not IsLegion then
         if false then
             local data = {GetItemInfo(itemID)}
             if not data[6] then
-                print ("retry", itemID)
+                --print ("retry", itemID)
                 data = {GetItemInfo(itemID)}
             end
 
             if not data[6] then
-                print("failed to get instant data", itemID)
+                --print("failed to get instant data", itemID)
                 return {}
             end
 
@@ -211,10 +211,10 @@ if not IsLegion then
         elseif select("#", ...) == 9 then
             if type(t[7]) == "boolean" and t[7] == true then
                 -- "", 0, 0, 0, false, 0, true, false, nil
-                print("QueryAuctionItems", "GetAll")
-                Compat.QueryAuctionItems(true)
+                --print("QueryAuctionItems", "GetAll")
+                Compat.QueryAuctionItems("", nil, nil, 0, 0, 0, 0, 0, 0, true)
             elseif ((t[9] ~= nil and type(t[9]) == "table") or (t[4] ~= nil and type(t[4]) == "number")) then
-                print("QueryAuctionItems", "7.x", ...)
+                --print("QueryAuctionItems", "7.x", ...)
                 local text, minLevel, maxLevel, page, usable, rarity, getAll, exactMatch, filterData = ...
                 
                 local invType = nil
@@ -228,12 +228,13 @@ if not IsLegion then
                 --print('"'..text..'"', minLevel, maxLevel, invType, class, subclass, page, usable, rarity)
                 Compat.QueryAuctionItems(text, minLevel, maxLevel, invType, class, subclass, page, usable, rarity)
             else
-                print("QueryAuctionItems", "5.x", ...)
+                --print("QueryAuctionItems", "5.x", ...)
                 -- local text, minLevel, maxLevel, invType, class, subclass, page, usable, rarity = ...
                 Compat.QueryAuctionItems(...)
             end
+        else
+            Compat.QueryAuctionItems(...)
         end
-        print(t[9] ~= nil , type(t[9]) == "table", t[4] ~= nil, type(t[4]) == "number")
     end
 
     local texture_mt = getmetatable(CreateFrame('Frame'):CreateTexture())
@@ -255,5 +256,9 @@ if not IsLegion then
     C_WowTokenPublic = {
         GetCurrentMarketPrice = function() return nil end,
         UpdateMarketPrice = function() return end
+    }
+
+    C_Social = {
+        IsSocialEnabled = function() return false end
     }
 end
