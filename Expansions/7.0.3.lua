@@ -1,11 +1,9 @@
 local IsLegion = select(4, GetBuildInfo()) >= 70000
 
-if not Compat then return end
-
 if not IsLegion then
-    local lastAuctionQuery = {}
     local GetItemInfo = _G.GetItemInfo
 
+    -- lots of new variables
     LE_ITEM_CLASS_WEAPON = 1;
     LE_ITEM_CLASS_ARMOR = 2;
     LE_ITEM_CLASS_CONTAINER = 3;
@@ -67,7 +65,8 @@ if not IsLegion then
 	LE_INVENTORY_TYPE_CLOAK_TYPE = INVTYPE_CLOAK
 	LE_INVENTORY_TYPE_HOLDABLE_TYPE = INVTYPE_HOLDABLE
 
-    function GetItemClassIdByName(className)
+    -- helper function
+    local GetItemClassIdByName = function(className)
         
         if (className == "Item Enhancement") then
             return LE_ITEM_CLASS_ITEM_ENHANCEMENT
@@ -85,7 +84,8 @@ if not IsLegion then
         return index[className]
     end
 
-    function GetItemSubClassIdByName(classID, subClassID)
+    -- helper function
+    local GetItemSubClassIdByName = function(classID, subClassID)
         --print("GetItemSubClassIdByName", classID, subClassID)
         local subItemClasses = { GetAuctionItemSubClasses(classID) }
         local index={}
@@ -99,7 +99,7 @@ if not IsLegion then
         return index[subClassID]
     end
 
-    function GetItemClassInfo(classID)
+    _G.GetItemClassInfo = function(classID)
         if (classID == LE_ITEM_CLASS_ITEM_ENHANCEMENT) then
             return "Item Enhancement";
         elseif classID == LE_ITEM_CLASS_KEY then
@@ -111,7 +111,7 @@ if not IsLegion then
         return itemClasses[classID - 1];
     end
 
-    function GetItemSubClassInfo(classID, subClassID)
+    _G.GetItemSubClassInfo = function(classID, subClassID)
         --print("GetItemSubClassInfo", classID, subClassID)
         local subItemClasses = { GetAuctionItemSubClasses(classID) }
         local index={}
@@ -126,7 +126,8 @@ if not IsLegion then
         return {index[subClassID], (classID == 4 and index[subClassID] <= 4)};
     end
 
-    function GetItemInventorySlotInfo(index)
+    -- not sure where this came from but it's used by some addons.
+    _G.GetItemInventorySlotInfo = function(index)
         local name = "";
         
         if index == LE_INVENTORY_TYPE_HEAD_TYPE then
@@ -181,6 +182,9 @@ if not IsLegion then
         return itemName, itemLink, itemQuality, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, sellPrice, classID, subClassID
     end
 
+    --[[ 
+    GetItemInfoInstant was added in 7.0.3 and relies on client data. To get around this, we are caching the data clientside as we're able.
+     ]]
     _G.GetItemInfoInstant = function (itemID)
         if not itemID then return {} end
 
