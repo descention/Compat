@@ -8,3 +8,6 @@
 Compat.lua
 
 SoundKitConstants.lua
+
+Expansions\6.0.2.lua
+Expansions\7.0.3.lua
