@@ -276,10 +276,16 @@ if not IsLegion then
     function GetRecipeReagentItemLink()
         --GetTradeSkillReagentItemLink
     end
-
+    
     C_TradeSkillUI = {
-        GetRecipeNumItemsProduced = GetTradeSkillNumMade
+        --GetFilteredRecipeIDs
+        GetRecipeNumItemsProduced = _G.GetTradeSkillNumMade,
+        --GetRecipeReagentInfo
+        --GetRecipeReagentItemLink
+        GetTradeSkillLine = _G.GetTradeSkillLine,
+        IsNPCCrafting = function() return false end,
     }
+    
 
     C_WowTokenPublic = {
         GetCurrentMarketPrice = function() return nil end,
